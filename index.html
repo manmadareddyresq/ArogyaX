@@ -3,501 +3,429 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ArogyaX | Compare Hyderabad Hospitals with Absolute Clarity</title>
-    <meta name="description" content="Hyderabad's most detailed hospital directory. Compare branches, doctors, costs, and emergency readiness in Kukatpally, Miyapur, and beyond.">
+    <title>ArogyaX | Compare Hyderabad Hospitals</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
-        :root { --brand: #0ea5e9; --surface: #f8fafc; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--surface); color: #1e293b; overflow-x: hidden; scroll-behavior: smooth; }
-        .font-outfit { font-family: 'Outfit', sans-serif; }
-        
-        /* Advanced Animations */
-        .page-transition { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .card-premium { transition: all 0.3s ease; border: 1px solid #e2e8f0; background: white; }
-        .card-premium:hover { transform: translateY(-5px); border-color: var(--brand); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
-        
-        /* Utility */
         [x-cloak] { display: none !important; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #fdfdfd; color: #0f172a; overflow-x: hidden; }
+        
+        /* Glassmorphism & UI */
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.3); 
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+            border-radius: 24px;
+        }
+        .premium-shadow { box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.08); }
+        
+        /* Page Transitions */
+        .page-enter { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeInScale { 
+            from { opacity: 0; transform: translateY(10px) scale(0.98); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        /* Custom Scrollbar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .score-bar { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; }
-        .score-fill { height: 100%; transition: width 1s ease-in-out; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Scoring Bars */
+        .progress-bg { background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; transition: width 1s ease-in-out; }
     </style>
 </head>
-<body x-data="arogyaApp()" class="antialiased">
+<body x-data="arogyaApp()" @hashchange.window="handleRouting()">
 
-    <nav class="fixed top-0 w-full z-[100] glass">
+    <header class="fixed top-0 w-full z-[100] bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div class="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-            <div @click="setPage('home')" class="flex items-center gap-2 cursor-pointer group">
-                <div class="bg-sky-500 p-2 rounded-xl group-hover:rotate-6 transition-transform">
-                    <i data-lucide="activity" class="text-white w-6 h-6"></i>
+            <div @click="navigate('home')" class="flex items-center gap-2 cursor-pointer">
+                <div class="bg-blue-600 p-2 rounded-xl text-white">
+                    <i data-lucide="cross"></i>
                 </div>
-                <span class="text-2xl font-bold tracking-tighter text-slate-900 font-outfit uppercase">Arogya<span class="text-sky-500">X</span></span>
+                <span class="text-xl font-bold tracking-tight text-slate-900 uppercase">Arogya<span class="text-blue-600">X</span></span>
             </div>
 
-            <div class="hidden lg:flex items-center gap-8 text-sm font-bold text-slate-600">
-                <button @click="setPage('home')" :class="page==='home'?'text-sky-500':''" class="hover:text-sky-500 transition">Home</button>
-                <button @click="setPage('hospitals')" :class="page==='hospitals'?'text-sky-500':''" class="hover:text-sky-500 transition">Hospitals</button>
-                <button @click="setPage('compare')" :class="page==='compare'?'text-sky-500':''" class="hover:text-sky-500 transition flex items-center gap-2">
-                    Compare <span x-show="compareList.length" x-text="compareList.length" class="bg-sky-100 text-sky-600 px-2 py-0.5 rounded-full text-[10px]"></span>
+            <nav class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-600">
+                <button @click="navigate('home')" :class="view === 'home' ? 'text-blue-600' : ''">Home</button>
+                <button @click="navigate('hospitals')" :class="view === 'hospitals' ? 'text-blue-600' : ''">Hospitals</button>
+                <button @click="navigate('compare')" :class="view === 'compare' ? 'text-blue-600' : ''" class="relative">
+                    Compare
+                    <span x-show="compareList.length > 0" x-text="compareList.length" class="absolute -top-2 -right-4 bg-blue-600 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full"></span>
                 </button>
-                <button @click="setPage('costs')" :class="page==='costs'?'text-sky-500':''" class="hover:text-sky-500 transition">Costs</button>
-                <button @click="setPage('contact')" :class="page==='contact'?'text-sky-500':''" class="hover:text-sky-500 transition">Contact</button>
-            </div>
+                <button @click="navigate('contact')" :class="view === 'contact' ? 'text-blue-600' : ''">Contact</button>
+            </nav>
 
-            <button @click="mobileMenu = !mobileMenu" class="lg:hidden p-2 text-slate-600">
-                <i data-lucide="menu" x-show="!mobileMenu"></i>
-                <i data-lucide="x" x-show="mobileMenu"></i>
-            </button>
+            <button class="md:hidden text-slate-900"><i data-lucide="menu"></i></button>
         </div>
-        
-        <div x-show="mobileMenu" x-cloak class="lg:hidden bg-white border-b p-6 space-y-6 font-bold text-slate-700 uppercase tracking-widest text-xs">
-            <div @click="setPage('home'); mobileMenu=false">Home</div>
-            <div @click="setPage('hospitals'); mobileMenu=false">Find Hospitals</div>
-            <div @click="setPage('compare'); mobileMenu=false">Compare Tools</div>
-            <div @click="setPage('costs'); mobileMenu=false">Cost Benchmarks</div>
-            <div @click="setPage('contact'); mobileMenu=false">Contact Us</div>
-        </div>
-    </nav>
+    </header>
 
-    <main class="pt-20">
+    <main class="pt-20 md:pt-24 min-h-screen">
 
-        <template x-if="page === 'home'">
-            <div class="page-transition">
-                <section class="relative pt-16 pb-24 px-4 overflow-hidden">
-                    <div class="max-w-5xl mx-auto text-center">
-                        <div class="inline-flex items-center gap-2 px-4 py-1.5 bg-sky-50 rounded-full text-sky-700 text-[11px] font-extrabold uppercase tracking-widest mb-8 border border-sky-100">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i> No Middleman • No Lead Capture • Verified Data
-                        </div>
-                        <h1 class="text-4xl md:text-7xl font-extrabold text-slate-900 mb-6 leading-tight font-outfit">
-                            Find and Compare <br><span class="text-sky-500">Hospitals in Hyderabad.</span>
-                        </h1>
-                        <p class="text-lg text-slate-500 mb-10 max-w-2xl mx-auto">
-                            The clearest way to choose a hospital. View detailed branch data, doctor profiles, and real-world costs with zero marketing bias.
-                        </p>
+        <div x-show="view === 'home'" class="page-enter">
+            <section class="max-w-7xl mx-auto px-4 py-12 md:py-24 text-center">
+                <h1 class="text-4xl md:text-7xl font-extrabold text-slate-900 mb-6 tracking-tight leading-tight">
+                    Find and Compare <br><span class="text-blue-600 underline decoration-blue-100 underline-offset-8">Hospitals in Hyderabad</span> Easily.
+                </h1>
+                <p class="text-lg text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+                    Zero middlemen. Zero fake reviews. Just structured, honest data to help you choose the right healthcare for your family.
+                </p>
 
-                        <div class="max-w-3xl mx-auto relative mb-16">
-                            <div class="flex items-center bg-white rounded-3xl p-2 shadow-2xl border border-slate-100 focus-within:ring-2 ring-sky-500/20 transition-all">
-                                <i data-lucide="search" class="ml-6 text-slate-400"></i>
-                                <input type="text" x-model="searchQuery" @input="showResults = true" placeholder="Search by Hospital, Area (Miyapur, KPHB), or Specialty..." class="flex-grow px-4 py-5 text-lg outline-none font-medium">
-                                <button @click="setPage('hospitals')" class="bg-sky-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-sky-700 transition hidden md:block">Explore Hub</button>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                            <template x-for="spec in ['Cardiac', 'Maternity', 'Emergency', 'Orthopedics']">
-                                <div @click="filters.specialty = spec; setPage('hospitals')" class="p-6 bg-white border border-slate-100 rounded-[2rem] cursor-pointer hover:border-sky-500 hover:bg-sky-50 transition group">
-                                    <div class="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 mb-4 mx-auto group-hover:bg-white"><i data-lucide="heart-pulse"></i></div>
-                                    <p class="font-bold text-slate-700 text-sm" x-text="spec"></p>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="py-20 bg-white">
-                    <div class="max-w-7xl mx-auto px-4">
-                        <div class="flex items-end justify-between mb-12">
-                            <div>
-                                <h2 class="text-3xl font-bold text-slate-900 font-outfit">Top Rated Facilities</h2>
-                                <p class="text-slate-500">Highest scores in Emergency Readiness and Patient Trust.</p>
-                            </div>
-                            <button @click="setPage('hospitals')" class="text-sky-600 font-bold flex items-center gap-2 hover:underline">View All <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <template x-for="h in hospitals.slice(0, 3)" :key="h.id">
-                                <div class="card-premium p-8 rounded-[2.5rem] flex flex-col h-full">
-                                    <div class="flex justify-between mb-6">
-                                        <span class="text-[10px] font-extrabold text-sky-600 bg-sky-50 px-2 py-1 rounded uppercase tracking-widest" x-text="h.type"></span>
-                                        <div class="flex items-center gap-1 text-orange-500 font-bold text-sm">
-                                            <i data-lucide="star" class="w-4 h-4 fill-current"></i> <span x-text="h.rating"></span>
-                                        </div>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-slate-900 mb-1" x-text="h.name"></h3>
-                                    <p class="text-slate-400 text-xs font-semibold mb-6 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> <span x-text="h.location"></span></p>
-                                    
-                                    <div class="flex flex-wrap gap-2 mb-8 flex-grow">
-                                        <template x-for="tag in h.bestFor">
-                                            <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 rounded-full uppercase" x-text="tag"></span>
-                                        </template>
-                                    </div>
-
-                                    <div class="flex gap-3 mt-auto">
-                                        <button @click="viewDetail(h)" class="flex-grow py-4 bg-slate-900 text-white rounded-2xl text-xs font-bold hover:bg-slate-800 transition">View Intelligence</button>
-                                        <button @click="toggleCompare(h)" :class="isInCompare(h.id) ? 'bg-sky-500 text-white' : 'bg-slate-100 text-slate-500'" class="p-4 rounded-2xl transition"><i data-lucide="layers" class="w-5 h-5"></i></button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </template>
-
-        <template x-if="page === 'hospitals'">
-            <div class="page-transition py-12 px-4 max-w-7xl mx-auto">
-                <div class="flex flex-col lg:flex-row gap-10">
-                    <aside class="w-full lg:w-72 space-y-8">
-                        <div>
-                            <h3 class="font-bold text-slate-900 mb-6 flex items-center gap-2 uppercase text-xs tracking-widest text-slate-400">Filter Results</h3>
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter block mb-2">Area / District</label>
-                                    <select x-model="filters.area" class="w-full p-4 bg-white border border-slate-200 rounded-2xl font-bold text-sm outline-none focus:ring-2 ring-sky-100 transition">
-                                        <option value="all">All Hyderabad</option>
-                                        <template x-for="area in uniqueAreas" :key="area"><option :value="area" x-text="area"></option></template>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter block mb-2">Facility Type</label>
-                                    <div class="grid grid-cols-1 gap-2">
-                                        <template x-for="type in ['Private', 'Government', 'Clinic']">
-                                            <button @click="filters.type = type" :class="filters.type === type ? 'bg-sky-500 text-white' : 'bg-white text-slate-600'" class="w-full py-3 px-4 rounded-xl text-xs font-bold border border-slate-100 transition shadow-sm" x-text="type"></button>
-                                        </template>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-center mb-8">
-                            <h2 class="text-2xl font-bold font-outfit" x-text="filteredHospitals.length + ' Hospitals Found'"></h2>
-                            <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                                Sort by: <span class="text-sky-600">Relevance</span>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <template x-for="h in filteredHospitals" :key="h.id">
-                                <div class="card-premium p-6 rounded-[2.5rem] flex flex-col group">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h3 class="text-lg font-bold text-slate-900 group-hover:text-sky-600 transition" x-text="h.name"></h3>
-                                            <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wide" x-text="h.location"></p>
-                                        </div>
-                                        <div class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-xl text-[10px] font-extrabold uppercase" x-text="h.affordability"></div>
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-3 gap-2 mb-6 text-center">
-                                        <div class="bg-slate-50 p-3 rounded-2xl">
-                                            <p class="text-[9px] font-bold text-slate-400 uppercase">Doctors</p>
-                                            <p class="text-sm font-bold text-slate-700" x-text="h.doctors + '+'"></p>
-                                        </div>
-                                        <div class="bg-slate-50 p-3 rounded-2xl">
-                                            <p class="text-[9px] font-bold text-slate-400 uppercase">Beds</p>
-                                            <p class="text-sm font-bold text-slate-700" x-text="h.beds + '+'"></p>
-                                        </div>
-                                        <div class="bg-slate-50 p-3 rounded-2xl">
-                                            <p class="text-[9px] font-bold text-slate-400 uppercase">Rating</p>
-                                            <p class="text-sm font-bold text-orange-500" x-text="h.rating"></p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex gap-2">
-                                        <button @click="viewDetail(h)" class="flex-grow py-3 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition">View Details</button>
-                                        <button @click="toggleCompare(h)" :class="isInCompare(h.id) ? 'bg-sky-500 text-white' : 'bg-white text-slate-400 border border-slate-200'" class="px-4 py-3 rounded-xl transition"><i data-lucide="layers" class="w-5 h-5"></i></button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
+                <div class="max-w-3xl mx-auto relative mb-20 group">
+                    <div class="bg-white p-2 rounded-[2rem] shadow-2xl border border-slate-100 flex items-center group-focus-within:ring-4 ring-blue-50 transition-all">
+                        <i data-lucide="search" class="ml-4 text-slate-400"></i>
+                        <input type="text" x-model="searchQuery" placeholder="Search Miyapur, Cardiology, or Apollo..." class="flex-grow p-4 outline-none text-lg font-medium">
+                        <button @click="navigate('hospitals')" class="bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold hover:bg-blue-700 transition hidden md:block">Search</button>
                     </div>
                 </div>
-            </div>
-        </template>
 
-        <template x-if="page === 'detail'">
-            <div class="page-transition pt-8 pb-32 px-4 max-w-7xl mx-auto">
-                <button @click="setPage('hospitals')" class="mb-10 flex items-center gap-2 text-slate-500 font-bold hover:text-sky-600 transition text-sm">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Intelligence Hub
-                </button>
-
-                <div class="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-sm mb-12">
-                    <div class="flex flex-col lg:flex-row justify-between items-start gap-12">
-                        <div class="flex-grow">
-                            <div class="flex flex-wrap gap-2 mb-6">
-                                <span class="px-3 py-1 bg-sky-50 text-sky-600 rounded-lg text-[10px] font-extrabold uppercase tracking-widest" x-text="activeH.type"></span>
-                                <template x-for="tag in activeH.bestFor">
-                                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-extrabold uppercase tracking-widest" x-text="'Best for ' + tag"></span>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <template x-for="h in hospitals.slice(0, 3)" :key="h.id">
+                        <div class="glass-card p-6 text-left premium-shadow flex flex-col h-full border hover:border-blue-400 transition-all cursor-pointer" @click="openHospital(h)">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-1 rounded-md uppercase" x-text="h.type"></span>
+                                <div class="flex items-center gap-1 text-amber-500 font-bold text-sm">
+                                    <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i> <span x-text="h.rating"></span>
+                                </div>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-900 mb-1" x-text="h.name"></h3>
+                            <p class="text-slate-400 text-sm mb-6 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> <span x-text="h.location"></span></p>
+                            
+                            <div class="flex flex-wrap gap-2 mb-8">
+                                <template x-for="tag in h.bestFor">
+                                    <span class="text-[9px] font-bold bg-emerald-50 text-emerald-600 px-2 py-1 rounded" x-text="tag"></span>
                                 </template>
                             </div>
-                            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 font-outfit mb-4" x-text="activeH.name"></h1>
-                            <p class="text-xl text-slate-500 flex items-center gap-2"><i data-lucide="map-pin" class="text-sky-500 w-5 h-5"></i> <span x-text="activeH.location + ', Hyderabad'"></span></p>
                             
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-                                <div class="p-5 bg-slate-50 rounded-[2rem]">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Emergency Readiness</p>
-                                    <p class="text-xl font-extrabold text-slate-900" x-text="activeH.emergencyScore + '%'"></p>
-                                    <div class="score-bar mt-2"><div class="score-fill bg-sky-500" :style="'width:' + activeH.emergencyScore + '%'"></div></div>
-                                </div>
-                                <div class="p-5 bg-slate-50 rounded-[2rem]">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Doctor Strength</p>
-                                    <p class="text-xl font-extrabold text-slate-900" x-text="activeH.doctors + '+'"></p>
-                                </div>
-                                <div class="p-5 bg-slate-50 rounded-[2rem]">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bed Capacity</p>
-                                    <p class="text-xl font-extrabold text-slate-900" x-text="activeH.beds + '+'"></p>
-                                </div>
-                                <div class="p-5 bg-slate-50 rounded-[2rem]">
-                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Peak Time</p>
-                                    <p class="text-xl font-extrabold text-orange-500" x-text="activeH.peakTime"></p>
-                                </div>
+                            <div class="mt-auto flex gap-2">
+                                <button class="flex-grow bg-slate-900 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider">Details</button>
+                                <button @click.stop="toggleCompare(h)" class="p-3 bg-white border border-slate-200 rounded-xl hover:bg-blue-50 transition" :class="isInCompare(h.id) ? 'text-blue-600 bg-blue-50 border-blue-200' : ''">
+                                    <i data-lucide="layers" class="w-5 h-5"></i>
+                                </button>
                             </div>
                         </div>
-                        
-                        <div class="w-full lg:w-96">
-                            <div class="w-full h-64 bg-slate-100 rounded-[2.5rem] overflow-hidden relative group">
-                                <img src="https://images.unsplash.com/photo-1586773860418-d319a39855df?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
-                                <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                    <button class="bg-white/90 backdrop-blur px-6 py-3 rounded-full text-xs font-bold text-slate-900 shadow-xl">Open Google Maps</button>
-                                </div>
+                    </template>
+                </div>
+            </section>
+        </div>
+
+        <div x-show="view === 'hospitals'" class="page-enter max-w-7xl mx-auto px-4 py-12">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <aside class="w-full lg:w-64 flex-shrink-0">
+                    <div class="sticky top-24 space-y-8">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Filters</h4>
+                            <div class="space-y-3">
+                                <select x-model="filters.area" class="w-full p-4 bg-white border rounded-2xl text-sm font-bold outline-none border-slate-200">
+                                    <option value="all">All Locations</option>
+                                    <option value="Kukatpally">Kukatpally</option>
+                                    <option value="Miyapur">Miyapur</option>
+                                    <option value="Jubilee Hills">Jubilee Hills</option>
+                                    <option value="Secunderabad">Secunderabad</option>
+                                </select>
+                                <select x-model="filters.type" class="w-full p-4 bg-white border rounded-2xl text-sm font-bold outline-none border-slate-200">
+                                    <option value="all">Any Type</option>
+                                    <option value="Private">Private</option>
+                                    <option value="Government">Government</option>
+                                    <option value="Clinic">Clinic</option>
+                                </select>
                             </div>
                         </div>
                     </div>
-                </div>
+                </aside>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    <div class="lg:col-span-2 space-y-12">
-                        <section class="p-8 md:p-10 bg-slate-900 rounded-[3rem] text-white">
-                            <h3 class="text-2xl font-bold font-outfit mb-8 flex items-center gap-3"><i data-lucide="alert-octagon" class="text-sky-400"></i> Transparency Hub</h3>
-                            <div class="grid md:grid-cols-2 gap-10">
+                <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <template x-for="h in filteredHospitals" :key="h.id">
+                        <div class="glass-card p-6 border hover:border-blue-400 transition-all cursor-pointer" @click="openHospital(h)">
+                            <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <p class="text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em] mb-4">Pros & Strengths</p>
+                                    <h3 class="text-lg font-bold text-slate-900" x-text="h.name"></h3>
+                                    <p class="text-xs text-slate-400 font-bold uppercase tracking-tight" x-text="h.location"></p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-extrabold text-blue-600" x-text="h.overallScore + '/10'"></span>
+                                    <p class="text-[9px] font-bold text-slate-400 uppercase">Arogya Score</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 mb-6">
+                                <div class="bg-slate-50 p-3 rounded-xl text-center">
+                                    <p class="text-[9px] text-slate-400 font-bold uppercase">Beds</p>
+                                    <p class="text-sm font-bold" x-text="h.beds"></p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl text-center">
+                                    <p class="text-[9px] text-slate-400 font-bold uppercase">Doctors</p>
+                                    <p class="text-sm font-bold" x-text="h.doctorsCount"></p>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-xl text-center">
+                                    <p class="text-[9px] text-slate-400 font-bold uppercase">Wait</p>
+                                    <p class="text-sm font-bold" x-text="h.waitTime + 'm'"></p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="flex-grow py-3 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase">View Profile</button>
+                                <button @click.stop="toggleCompare(h)" class="px-4 border border-slate-200 rounded-xl" :class="isInCompare(h.id) ? 'bg-blue-600 text-white' : ''"><i data-lucide="layers" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="view === 'detail'" class="page-enter pb-32">
+            <template x-if="activeH">
+                <div>
+                    <section class="bg-white border-b py-12 md:py-20 px-4">
+                        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+                            <div class="flex-grow">
+                                <button @click="navigate('hospitals')" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase mb-6 hover:text-blue-600 transition">
+                                    <i data-lucide="chevron-left" class="w-4 h-4"></i> Back to Listing
+                                </button>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    <span class="px-2 py-1 bg-red-50 text-red-600 text-[10px] font-bold uppercase rounded" x-show="activeH.emergencyReadiness > 80">High Emergency Readiness</span>
+                                    <span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold uppercase rounded" x-text="activeH.affordability"></span>
+                                </div>
+                                <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-2 tracking-tight" x-text="activeH.name"></h1>
+                                <p class="text-slate-500 font-medium text-lg flex items-center gap-2">
+                                    <i data-lucide="navigation" class="w-4 h-4 text-blue-500"></i> Best for <span x-text="activeH.bestFor[0]"></span> in <span x-text="activeH.location"></span> • <span class="text-blue-600">~22m travel time</span>
+                                </p>
+                            </div>
+                            <div class="bg-blue-600 p-8 rounded-[2.5rem] text-white text-center flex-shrink-0 min-w-[200px] premium-shadow">
+                                <p class="text-sm font-bold uppercase tracking-widest mb-1 opacity-80">Overall Score</p>
+                                <p class="text-6xl font-black font-outfit" x-text="activeH.overallScore"></p>
+                                <p class="text-[10px] font-bold uppercase mt-2 opacity-60">Verified Index</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-4 -mt-10">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="glass-card p-6 bg-white shadow-xl">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mb-2">ICU Capacity</p>
+                                <p class="text-2xl font-bold" x-text="activeH.icuBeds + ' Units'"></p>
+                            </div>
+                            <div class="glass-card p-6 bg-white shadow-xl">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mb-2">Average Wait</p>
+                                <p class="text-2xl font-bold text-orange-500" x-text="activeH.waitTime + ' Minutes'"></p>
+                            </div>
+                            <div class="glass-card p-6 bg-white shadow-xl">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mb-2">Doctors</p>
+                                <p class="text-2xl font-bold" x-text="activeH.doctorsCount + '+'"></p>
+                            </div>
+                            <div class="glass-card p-6 bg-white shadow-xl">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mb-2">Ready Score</p>
+                                <p class="text-2xl font-bold text-emerald-500" x-text="activeH.emergencyReadiness + '%'"></p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        <div class="lg:col-span-2 space-y-16">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div class="bg-emerald-50 p-8 rounded-[2rem] border border-emerald-100">
+                                    <h4 class="text-emerald-700 font-bold uppercase text-xs tracking-widest mb-6 flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> The Strengths</h4>
                                     <ul class="space-y-4">
                                         <template x-for="pro in activeH.pros">
-                                            <li class="flex gap-3 text-sm text-slate-300 font-medium"><i data-lucide="check-circle-2" class="text-emerald-400 w-5 h-5 shrink-0"></i> <span x-text="pro"></span></li>
+                                            <li class="flex gap-3 text-sm font-medium text-emerald-900 leading-relaxed">
+                                                <i data-lucide="plus" class="w-4 h-4 shrink-0 text-emerald-500"></i> <span x-text="pro"></span>
+                                            </li>
                                         </template>
                                     </ul>
                                 </div>
-                                <div>
-                                    <p class="text-[10px] font-bold text-red-400 uppercase tracking-[0.2em] mb-4">Reported Constraints</p>
+                                <div class="bg-red-50 p-8 rounded-[2rem] border border-red-100">
+                                    <h4 class="text-red-700 font-bold uppercase text-xs tracking-widest mb-6 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Reality Check</h4>
                                     <ul class="space-y-4">
                                         <template x-for="con in activeH.cons">
-                                            <li class="flex gap-3 text-sm text-slate-300 font-medium"><i data-lucide="help-circle" class="text-red-400 w-5 h-5 shrink-0"></i> <span x-text="con"></span></li>
+                                            <li class="flex gap-3 text-sm font-medium text-red-900 leading-relaxed">
+                                                <i data-lucide="minus" class="w-4 h-4 shrink-0 text-red-500"></i> <span x-text="con"></span>
+                                            </li>
                                         </template>
                                     </ul>
                                 </div>
                             </div>
-                        </section>
 
-                        <section>
-                            <h3 class="text-2xl font-bold font-outfit mb-6">Facility Network (Branches)</h3>
-                            <div class="grid md:grid-cols-2 gap-4">
-                                <template x-for="branch in activeH.branches">
-                                    <div class="p-6 bg-white rounded-3xl border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="text-2xl font-bold mb-8">Clinical Proficiency</h3>
+                                <div class="space-y-6">
+                                    <template x-for="dept in activeH.departmentStrength">
                                         <div>
-                                            <p class="font-bold text-slate-900" x-text="branch.area"></p>
-                                            <p class="text-[10px] text-slate-400 font-bold uppercase" x-text="branch.specialty"></p>
+                                            <div class="flex justify-between text-sm font-bold mb-2">
+                                                <span x-text="dept.name"></span>
+                                                <span x-text="dept.score + '%'"></span>
+                                            </div>
+                                            <div class="progress-bg">
+                                                <div class="progress-fill bg-blue-600" :style="'width: ' + dept.score + '%'"></div>
+                                            </div>
                                         </div>
-                                        <i data-lucide="chevron-right" class="text-slate-200"></i>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-2xl font-bold mb-8">Associated Experts</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <template x-for="doc in activeH.doctors">
+                                        <div @click="openDoctor(doc)" class="flex items-center gap-4 p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition cursor-pointer">
+                                            <div class="w-14 h-14 bg-slate-100 rounded-full shrink-0"></div>
+                                            <div>
+                                                <p class="font-bold text-slate-900" x-text="doc.name"></p>
+                                                <p class="text-xs text-slate-400 font-medium" x-text="doc.specialty"></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <aside class="space-y-8">
+                            <div class="bg-white border rounded-[2rem] p-8 shadow-sm">
+                                <h4 class="font-bold mb-6">Facility Readiness</h4>
+                                <div class="space-y-4">
+                                    <template x-for="am in activeH.amenities">
+                                        <div class="flex items-center gap-3 text-sm font-bold text-slate-600">
+                                            <i data-lucide="check" class="w-4 h-4 text-blue-500"></i> <span x-text="am"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="bg-slate-900 text-white rounded-[2rem] p-8">
+                                <h4 class="font-bold mb-4">Patient Traffic</h4>
+                                <p class="text-xs text-slate-400 mb-6 font-medium">Predicted data for today in <span x-text="activeH.location"></span></p>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-bold">Morning Peak</span>
+                                        <span class="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-1 rounded">V. Busy</span>
                                     </div>
-                                </template>
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 class="text-2xl font-bold font-outfit mb-6">Departments & Procedures</h3>
-                            <div class="flex flex-wrap gap-2">
-                                <template x-for="dept in activeH.departments">
-                                    <div class="px-5 py-4 bg-white border border-slate-100 rounded-2xl text-sm font-bold text-slate-700 shadow-sm" x-text="dept"></div>
-                                </template>
-                            </div>
-                        </section>
-                    </div>
-
-                    <aside class="space-y-8">
-                        <div class="p-8 bg-sky-600 rounded-[2.5rem] text-white">
-                            <h4 class="text-lg font-bold mb-6">Estimated Costing</h4>
-                            <div class="space-y-6">
-                                <div class="flex justify-between items-center py-2 border-b border-sky-400/30">
-                                    <span class="text-xs font-bold uppercase opacity-70">Consultation Fee</span>
-                                    <span class="font-extrabold" x-text="'₹' + activeH.costs.consultation"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-2 border-b border-sky-400/30">
-                                    <span class="text-xs font-bold uppercase opacity-70">General Ward / Day</span>
-                                    <span class="font-extrabold" x-text="'₹' + activeH.costs.ward"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-xs font-bold uppercase opacity-70">ICU Charges / Day</span>
-                                    <span class="font-extrabold" x-text="'₹' + activeH.costs.icu"></span>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-bold">Afternoon</span>
+                                        <span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded">Low</span>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="mt-8 text-[10px] text-sky-100 leading-relaxed font-medium">Prices are approximate. Actual billing varies by case. Verify directly with the billing desk before admission.</p>
-                        </div>
-
-                        <div class="p-8 bg-white border border-slate-100 rounded-[2.5rem] shadow-sm">
-                            <h4 class="font-bold text-slate-900 mb-6">Operational Hours</h4>
-                            <div class="space-y-3 text-sm font-bold">
-                                <div class="flex justify-between"><span class="text-slate-400">Emergency</span> <span class="text-emerald-500">24/7 Available</span></div>
-                                <div class="flex justify-between"><span class="text-slate-400">OPD Hours</span> <span>09:00 - 20:00</span></div>
-                                <div class="flex justify-between"><span class="text-slate-400">Visiting</span> <span>16:00 - 18:00</span></div>
-                            </div>
-                        </div>
-                    </aside>
+                        </aside>
+                    </section>
                 </div>
+            </template>
+        </div>
+
+        <div x-show="view === 'compare'" class="page-enter max-w-7xl mx-auto px-4 py-20">
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-4 text-center">Benchmark Comparison</h2>
+            <p class="text-slate-500 text-center mb-16">Scientific cross-analysis of healthcare providers.</p>
+
+            <div x-show="compareList.length === 0" class="text-center py-20 bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+                <p class="text-slate-400 font-bold">Your comparison list is empty.</p>
+                <button @click="navigate('hospitals')" class="mt-4 text-blue-600 font-bold underline">Go add hospitals</button>
             </div>
-        </template>
 
-        <template x-if="page === 'compare'">
-            <div class="page-transition py-20 px-4 max-w-7xl mx-auto">
-                <div class="text-center mb-20">
-                    <h2 class="text-4xl md:text-6xl font-extrabold text-slate-900 font-outfit mb-6">Comparative Benchmarking</h2>
-                    <p class="text-slate-500">Cross-examine structural and clinical metrics across facilities.</p>
-                </div>
+            <div x-show="compareList.length > 0" class="overflow-x-auto">
+                <table class="w-full text-left min-w-[800px]">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="py-6 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metric</th>
+                            <template x-for="h in compareList" :key="h.id">
+                                <th class="py-6 px-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-lg font-bold" x-text="h.name"></span>
+                                        <button @click="toggleCompare(h)" class="text-[9px] text-red-500 uppercase font-bold text-left mt-2">Remove</button>
+                                    </div>
+                                </th>
+                            </template>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm font-bold text-slate-600">
+                        <tr class="border-b border-slate-50">
+                            <td class="py-6 px-4 text-slate-400">Wait Time</td>
+                            <template x-for="h in compareList">
+                                <td class="py-6 px-4" x-text="h.waitTime + 'm'"></td>
+                            </template>
+                        </tr>
+                        <tr class="border-b border-slate-50">
+                            <td class="py-6 px-4 text-slate-400">Arogya Score</td>
+                            <template x-for="h in compareList">
+                                <td class="py-6 px-4"><span class="text-blue-600" x-text="h.overallScore + '/10'"></span></td>
+                            </template>
+                        </tr>
+                        <tr class="border-b border-slate-50">
+                            <td class="py-6 px-4 text-slate-400">Emergency Score</td>
+                            <template x-for="h in compareList">
+                                <td class="py-6 px-4" x-text="h.emergencyReadiness + '%'"></td>
+                            </template>
+                        </tr>
+                        <tr class="border-b border-slate-50">
+                            <td class="py-6 px-4 text-slate-400">Doctor Strength</td>
+                            <template x-for="h in compareList">
+                                <td class="py-6 px-4" x-text="h.doctorsCount"></td>
+                            </template>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-                <div x-show="!compareList.length" class="py-32 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
-                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300"><i data-lucide="layers-2" class="w-10 h-10"></i></div>
-                    <p class="text-slate-400 font-bold">Your comparison list is empty.</p>
-                    <button @click="setPage('hospitals')" class="mt-8 px-8 py-4 bg-sky-600 text-white rounded-2xl font-bold">Find Hospitals</button>
-                </div>
-
-                <div x-show="compareList.length" class="overflow-x-auto hide-scrollbar">
-                    <div class="min-w-[1000px] grid grid-cols-4 bg-white rounded-[4rem] border border-slate-100 overflow-hidden shadow-2xl">
-                        <div class="col-span-1 bg-slate-50 p-10 flex flex-col gap-12 font-extrabold text-[10px] text-slate-400 uppercase tracking-widest border-r border-slate-100">
-                            <div class="h-16">Intelligence Header</div>
-                            <div>Region Hub</div>
-                            <div>Facility Score</div>
-                            <div>Bed Inventory</div>
-                            <div>Emergency Readiness</div>
-                            <div>Pricing Index</div>
-                            <div>Action</div>
-                        </div>
-
-                        <template x-for="h in compareList" :key="h.id">
-                            <div class="col-span-1 p-10 flex flex-col gap-12 text-sm font-bold text-slate-700 relative hover:bg-sky-50 transition">
-                                <button @click="toggleCompare(h)" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition"><i data-lucide="x-circle"></i></button>
-                                <div class="h-16">
-                                    <p class="text-xl font-extrabold text-slate-900 leading-tight" x-text="h.name"></p>
+        <div x-show="view === 'doctor'" class="page-enter max-w-4xl mx-auto px-4 py-20">
+            <template x-if="activeDoc">
+                <div class="glass-card p-12 shadow-2xl">
+                    <button @click="window.history.back()" class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase mb-10 hover:text-blue-600">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i> Back
+                    </button>
+                    <div class="flex flex-col md:flex-row gap-10 items-center md:items-start text-center md:text-left">
+                        <div class="w-32 h-32 bg-blue-100 rounded-full flex-shrink-0"></div>
+                        <div>
+                            <h2 class="text-4xl font-extrabold text-slate-900" x-text="activeDoc.name"></h2>
+                            <p class="text-blue-600 font-bold text-lg mb-4" x-text="activeDoc.specialty"></p>
+                            <p class="text-slate-500 font-medium mb-8 leading-relaxed">Specialist with <span x-text="activeDoc.experience"></span> years of clinical experience in advanced healthcare environments.</p>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-4 rounded-2xl">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Consultation</p>
+                                    <p class="text-xl font-bold" x-text="'₹' + activeDoc.fee"></p>
                                 </div>
-                                <div x-text="h.location"></div>
-                                <div class="flex items-center gap-1 text-orange-500">
-                                    <i data-lucide="star" class="w-4 h-4 fill-current"></i> <span x-text="h.rating"></span>
+                                <div class="bg-slate-50 p-4 rounded-2xl">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase mb-1">Experience</p>
+                                    <p class="text-xl font-bold" x-text="activeDoc.experience + ' Years'"></p>
                                 </div>
-                                <div x-text="h.beds + '+'"></div>
-                                <div>
-                                    <span :class="h.emergencyScore > 85 ? 'text-emerald-600' : 'text-orange-500'" x-text="h.emergencyScore + '% Reliability'"></span>
-                                </div>
-                                <div x-text="h.affordability"></div>
-                                <button @click="viewDetail(h)" class="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] uppercase font-bold tracking-widest">Profile Deep-Dive</button>
                             </div>
-                        </template>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </template>
+            </template>
+        </div>
 
-        <template x-if="page === 'costs'">
-            <div class="page-transition py-20 px-4 max-w-5xl mx-auto">
-                <div class="text-center mb-16">
-                    <h2 class="text-5xl font-extrabold text-slate-900 font-outfit mb-6">Hyderabad Healthcare Benchmarks</h2>
-                    <p class="text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">Average market rates across top private hospitals. Use this to detect hidden hospital markups.</p>
+        <div x-show="view === 'contact'" class="page-enter max-w-3xl mx-auto px-4 py-24 text-center">
+            <h2 class="text-5xl font-extrabold text-slate-900 mb-4">Let's Connect</h2>
+            <p class="text-slate-500 text-lg mb-12 font-medium">Feedback on our data? Reporting a missing hospital? We're here.</p>
+            <form class="space-y-6 text-left">
+                <div class="grid grid-cols-2 gap-6">
+                    <input type="text" placeholder="Your Name" class="p-5 border rounded-2xl outline-none focus:ring-4 ring-blue-50 w-full font-bold">
+                    <input type="email" placeholder="Email Address" class="p-5 border rounded-2xl outline-none focus:ring-4 ring-blue-50 w-full font-bold">
                 </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-                    <div class="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm flex items-center justify-between group hover:border-sky-500 transition">
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 group-hover:bg-sky-500 group-hover:text-white transition"><i data-lucide="stethoscope"></i></div>
-                            <span class="font-bold text-slate-700 text-lg">OPD Consult</span>
-                        </div>
-                        <span class="text-2xl font-extrabold text-slate-900 font-outfit">₹600 - 1.5k</span>
-                    </div>
-                    <div class="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm flex items-center justify-between group hover:border-sky-500 transition">
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-sky-600 group-hover:bg-sky-500 group-hover:text-white transition"><i data-lucide="bed"></i></div>
-                            <span class="font-bold text-slate-700 text-lg">Ward / Day</span>
-                        </div>
-                        <span class="text-2xl font-extrabold text-slate-900 font-outfit">₹3.5k - 8k</span>
-                    </div>
-                    <div class="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm flex items-center justify-between group hover:border-sky-500 transition">
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition"><i data-lucide="activity"></i></div>
-                            <span class="font-bold text-slate-700 text-lg">ICU / Day</span>
-                        </div>
-                        <span class="text-2xl font-extrabold text-slate-900 font-outfit">₹20k - 50k</span>
-                    </div>
-                    <div class="p-10 bg-white border border-slate-100 rounded-[3rem] shadow-sm flex items-center justify-between group hover:border-sky-500 transition">
-                        <div class="flex items-center gap-5">
-                            <div class="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition"><i data-lucide="truck"></i></div>
-                            <span class="font-bold text-slate-700 text-lg">Ambulance</span>
-                        </div>
-                        <span class="text-2xl font-extrabold text-slate-900 font-outfit">₹2.5k - 5k</span>
-                    </div>
-                </div>
-
-                <div class="p-12 bg-slate-900 rounded-[4rem] text-white">
-                    <h4 class="text-2xl font-bold font-outfit mb-8 flex items-center gap-3"><i data-lucide="shield-alert" class="text-sky-400"></i> The Pricing Reality</h4>
-                    <p class="text-slate-400 leading-relaxed mb-6">Actual hospital billing is heavily influenced by the patient's condition, the seniority of the operating surgeon, and diagnostic intensity. <strong>ArogyaX</strong> recommends verifying TPA/Insurance network eligibility before any planned admission.</p>
-                </div>
-            </div>
-        </template>
-
-        <template x-if="page === 'contact'">
-            <div class="page-transition py-20 px-4 max-w-3xl mx-auto text-center">
-                <h2 class="text-4xl font-extrabold text-slate-900 font-outfit mb-6">Talk to the Data Architects</h2>
-                <p class="text-slate-500 mb-12">Feedback, data corrections, or partnership inquiries only. <strong>ArogyaX is not a booking platform.</strong></p>
-                
-                <form class="space-y-6 text-left">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase">Full Name</label>
-                            <input type="text" class="w-full p-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 ring-sky-100 font-bold">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-xs font-bold text-slate-400 uppercase">Email Address</label>
-                            <input type="email" class="w-full p-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 ring-sky-100 font-bold">
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-bold text-slate-400 uppercase">Your Message</label>
-                        <textarea rows="5" class="w-full p-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 ring-sky-100 font-bold"></textarea>
-                    </div>
-                    <button type="button" class="w-full py-5 bg-sky-600 text-white rounded-2xl font-bold hover:bg-sky-700 transition shadow-xl shadow-sky-100">Send Intelligence Report</button>
-                </form>
-            </div>
-        </template>
+                <textarea rows="5" placeholder="How can we improve your healthcare search?" class="p-5 border rounded-2xl outline-none focus:ring-4 ring-blue-50 w-full font-bold"></textarea>
+                <button class="bg-blue-600 text-white w-full py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-100">Send Intelligence Report</button>
+            </form>
+        </div>
 
     </main>
 
-    <footer class="bg-white border-t border-slate-100 pt-24 pb-12 mt-20">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
-                <div class="col-span-2">
-                    <div class="flex items-center gap-2 mb-8">
-                        <div class="bg-sky-500 p-1.5 rounded-lg"><i data-lucide="activity" class="text-white w-5 h-5"></i></div>
-                        <span class="text-2xl font-bold tracking-tighter font-outfit uppercase">Arogya<span class="text-sky-500">X</span></span>
+    <footer class="bg-white border-t border-slate-100 py-20">
+        <div class="max-w-7xl mx-auto px-4 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-12">
+            <div>
+                <div @click="navigate('home')" class="flex items-center gap-2 mb-6 justify-center md:justify-start cursor-pointer">
+                    <div class="bg-blue-600 p-1 rounded-lg text-white">
+                        <i data-lucide="cross" class="w-4 h-4"></i>
                     </div>
-                    <p class="text-slate-500 text-sm leading-relaxed max-w-sm mb-8 font-medium">Helping you choose the right hospital with clarity and confidence. No hidden agendas, just structured data for Hyderabad citizens.</p>
+                    <span class="text-lg font-bold tracking-tight text-slate-900 uppercase">Arogya<span class="text-blue-600">X</span></span>
                 </div>
-                <div>
-                    <h5 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-8">Platform Data</h5>
-                    <ul class="space-y-4 text-sm font-bold text-slate-600">
-                        <li><button @click="setPage('hospitals')" class="hover:text-sky-500 transition">Intelligence Hub</button></li>
-                        <li><button @click="setPage('compare')" class="hover:text-sky-500 transition">Benchmarking Tool</button></li>
-                        <li><button @click="setPage('costs')" class="hover:text-sky-500 transition">Regional Costs</button></li>
-                    </ul>
-                </div>
-                <div>
-                    <h5 class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-8">Trust Center</h5>
-                    <ul class="space-y-4 text-sm font-bold text-slate-600">
-                        <li><a href="#" class="hover:text-sky-500 transition">Privacy Protocols</a></li>
-                        <li><a href="#" class="hover:text-sky-500 transition">Terms of Data</a></li>
-                        <li class="text-red-500">Legal Disclaimer</li>
-                    </ul>
-                </div>
+                <p class="text-slate-400 font-medium text-sm">Helping you choose the right hospital with clarity and confidence.</p>
             </div>
-            <div class="pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
-                <p>© 2026 ArogyaX. Handcrafted for Citizens.</p>
-                <div class="flex gap-6">
-                    <span>Hyderabad Health Registry Verified</span>
-                </div>
+            <div class="flex gap-12 text-sm font-bold text-slate-600">
+                <button @click="navigate('home')">Home</button>
+                <button @click="navigate('hospitals')">Hospitals</button>
+                <button @click="navigate('compare')">Compare</button>
+                <button @click="navigate('contact')">Contact</button>
             </div>
         </div>
     </footer>
@@ -505,72 +433,51 @@
     <script>
         function arogyaApp() {
             return {
-                page: 'home',
-                mobileMenu: false,
+                view: 'home',
                 searchQuery: '',
-                showResults: false,
                 activeH: null,
+                activeDoc: null,
                 compareList: [],
-                filters: { area: 'all', type: 'Private', specialty: 'all' },
+                filters: { area: 'all', type: 'all' },
                 
-                // DEEP RELATIONAL DATASET
+                // Advanced Structured Healthcare Data
                 hospitals: [
-                    { 
-                        id: 1, name: "Apollo Health City", type: "Private", location: "Jubilee Hills", rating: 4.8, 
-                        doctors: 450, beds: 600, bestFor: ["Cardiac", "Oncology", "Robotics"], affordability: "Premium",
-                        emergencyScore: 98, peakTime: "High (10am - 4pm)",
-                        branches: [{area: "Jubilee Hills", specialty: "Multi-spec"}, {area: "Hyderguda", specialty: "Emergency"}],
-                        departments: ["Cardiology", "Neurology", "Gastroenterology", "Bypass Surgery"],
+                    {
+                        id: 1, name: "Apollo Health City", location: "Jubilee Hills", type: "Private", rating: 4.8, 
+                        overallScore: 9.4, beds: 600, icuBeds: 120, doctorsCount: 450, waitTime: 45, affordability: "Premium",
+                        emergencyReadiness: 96, bestFor: ["Cardiac", "Oncology", "Robotics"],
                         pros: ["World-class trauma unit", "Robot-assisted surgery", "High TPA acceptance"],
                         cons: ["High waiting period", "Expensive premium wards", "Complex navigation"],
-                        costs: { consultation: 1500, ward: 7500, icu: 45000 }
+                        amenities: ["Pharmacy 24/7", "Cafeteria", "WiFi", "Wheelchair Access", "Parking", "Ambulance"],
+                        departmentStrength: [{name: "Cardiology", score: 98}, {name: "Neurology", score: 92}, {name: "Oncology", score: 95}],
+                        doctors: [
+                            {id: 101, name: "Dr. Arvind Reddy", specialty: "Cardiologist", experience: 22, fee: 1500},
+                            {id: 102, name: "Dr. Sneha Rao", specialty: "Neurologist", experience: 18, fee: 1200}
+                        ]
                     },
-                    { 
-                        id: 2, name: "Yashoda Hospitals", type: "Private", location: "Somajiguda", rating: 4.7, 
-                        doctors: 320, beds: 500, bestFor: ["Maternity", "Critical Care"], affordability: "Mid-Range",
-                        emergencyScore: 94, peakTime: "Moderate",
-                        branches: [{area: "Somajiguda", specialty: "Cardiac"}, {area: "Malakpet", specialty: "General"}],
-                        departments: ["Pulmonology", "Renal Sciences", "Pediatrics"],
-                        pros: ["Quick admission process", "Renowned Pulmonologists"],
+                    {
+                        id: 2, name: "Yashoda Hospitals", location: "Secunderabad", type: "Private", rating: 4.7, 
+                        overallScore: 9.1, beds: 500, icuBeds: 100, doctorsCount: 320, waitTime: 30, affordability: "Mid-Range",
+                        emergencyReadiness: 94, bestFor: ["Maternity", "Pulmonology"],
+                        pros: ["Quick admission process", "Leading Pulmonologists", "Prime location"],
                         cons: ["Parking constraints", "Crowded OPD lounges"],
-                        costs: { consultation: 1000, ward: 5500, icu: 35000 }
+                        amenities: ["Pharmacy 24/7", "Cafeteria", "Ambulance", "WiFi"],
+                        departmentStrength: [{name: "Pulmonology", score: 97}, {name: "Orthopedics", score: 88}, {name: "Pediatrics", score: 85}],
+                        doctors: [
+                            {id: 103, name: "Dr. K. Srinivas", specialty: "Pulmonologist", experience: 15, fee: 1000}
+                        ]
                     },
-                    { 
-                        id: 3, name: "NIMS", type: "Government", location: "Punjagutta", rating: 4.1, 
-                        doctors: 600, beds: 1200, bestFor: ["Low Cost", "Research"], affordability: "Budget",
-                        emergencyScore: 89, peakTime: "Always High",
-                        branches: [],
-                        departments: ["General Medicine", "Research Wing", "Radiology"],
-                        pros: ["Highly experienced staff", "Minimal costs"],
-                        cons: ["Infrastructure needs update", "Long surgery queues"],
-                        costs: { consultation: 100, ward: 500, icu: 5000 }
-                    },
-                    { 
-                        id: 4, name: "Care Hospitals", type: "Private", location: "Banjara Hills", rating: 4.6, 
-                        doctors: 280, beds: 450, bestFor: ["Cardiac", "Nephrology"], affordability: "Mid-Range",
-                        emergencyScore: 92, peakTime: "Morning Peak",
-                        branches: [{area: "Banjara Hills", specialty: "Heart Hub"}, {area: "Hi-tech City", specialty: "Multi-spec"}],
-                        departments: ["Cardiology", "Internal Medicine", "Surgery"],
-                        pros: ["Excellent nursing care", "Leading Cardiac center"],
-                        cons: ["Older infrastructure in Banjara branch"],
-                        costs: { consultation: 1200, ward: 6000, icu: 38000 }
-                    },
-                    { 
-                        id: 5, name: "Rainbow Children's", type: "Private", location: "Banjara Hills", rating: 4.9, 
-                        doctors: 140, beds: 200, bestFor: ["Pediatrics", "Neonatal"], affordability: "Premium",
-                        emergencyScore: 96, peakTime: "Moderate",
-                        branches: [],
-                        departments: ["Pediatrics", "Child Psychology", "NICU"],
-                        pros: ["Best-in-class NICU", "Kid-friendly environment"],
-                        cons: ["Consultation fees are high"],
-                        costs: { consultation: 1500, ward: 8000, icu: 40000 }
-                    },
-                    // Expanding logic for 60+ entries would follow this schema...
+                    {
+                        id: 3, name: "KIMS Hospital", location: "Secunderabad", type: "Private", rating: 4.6, 
+                        overallScore: 8.9, beds: 1000, icuBeds: 200, doctorsCount: 500, waitTime: 55, affordability: "Mid-Range",
+                        emergencyReadiness: 91, bestFor: ["Renal Sciences", "Cardiac"],
+                        pros: ["Huge bed capacity", "High-end diagnostic lab"],
+                        cons: ["Wait time can exceed 1 hour", "Complex billing process"],
+                        amenities: ["Pharmacy 24/7", "Cafeteria", "WiFi", "Diagnostics"],
+                        departmentStrength: [{name: "Nephrology", score: 96}, {name: "Cardiology", score: 90}],
+                        doctors: []
+                    }
                 ],
-
-                get uniqueAreas() {
-                    return [...new Set(this.hospitals.map(h => h.location))].sort();
-                },
 
                 get filteredHospitals() {
                     let items = this.hospitals;
@@ -583,34 +490,41 @@
                     return items;
                 },
 
-                setPage(p) {
-                    this.page = p;
+                // NAVIGATION ENGINE
+                navigate(view, data = null) {
+                    this.view = view;
+                    if (data) {
+                        if (view === 'detail') this.activeH = data;
+                        if (view === 'doctor') this.activeDoc = data;
+                    }
+                    window.location.hash = view + (data ? `?id=${data.id}` : '');
                     window.scrollTo({top: 0, behavior: 'smooth'});
                     this.$nextTick(() => lucide.createIcons());
                 },
 
-                viewDetail(h) {
-                    this.activeH = h;
-                    this.setPage('detail');
+                handleRouting() {
+                    const hash = window.location.hash.replace('#', '').split('?')[0] || 'home';
+                    this.view = hash;
+                    lucide.createIcons();
                 },
 
+                openHospital(h) { this.navigate('detail', h); },
+                openDoctor(d) { this.navigate('doctor', d); },
+
+                // COMPARE ENGINE
                 toggleCompare(h) {
-                    const idx = this.compareList.findIndex(x => x.id === h.id);
-                    if (idx > -1) {
-                        this.compareList.splice(idx, 1);
-                    } else if (this.compareList.length < 3) {
-                        this.compareList.push(h);
+                    const exists = this.compareList.find(x => x.id === h.id);
+                    if (exists) {
+                        this.compareList = this.compareList.filter(x => x.id !== h.id);
                     } else {
-                        alert("Comparison limited to 3 facilities for accuracy.");
+                        if (this.compareList.length < 3) this.compareList.push(h);
+                        else alert("Limit: 3 hospitals for optimal comparison");
                     }
-                    this.$nextTick(() => lucide.createIcons());
                 },
-
-                isInCompare(id) {
-                    return this.compareList.some(x => x.id === id);
-                },
+                isInCompare(id) { return this.compareList.some(x => x.id === id); },
 
                 init() {
+                    this.handleRouting();
                     lucide.createIcons();
                 }
             }
