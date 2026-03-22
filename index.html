@@ -3,159 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <title>ArogyaX | Hyderabad Hospital Decision Engine</title>
+    <title>ArogyaX | Compare Hyderabad Hospitals with Confidence</title>
+    
+    <meta name="description" content="Hyderabad's most trusted hospital comparison platform. Real data on 60+ hospitals, 18,000+ doctors, and real-time emergency readiness.">
+    <meta name="author" content="ArogyaX">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
+        :root { --primary: #2563eb; --glass: rgba(255, 255, 255, 0.7); }
         [x-cloak] { display: none !important; }
-        :root { --primary: #2563eb; --glass: rgba(255, 255, 255, 0.75); }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #0f172a; -webkit-tap-highlight-color: transparent; }
-        .font-outfit { font-family: 'Outfit', sans-serif; }
-
-        /* Smooth Page Transitions */
-        .page-transition { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { 
-            from { opacity: 0; transform: translateY(20px); filter: blur(10px); } 
-            to { opacity: 1; transform: translateY(0); filter: blur(0); } 
-        }
-
-        /* Premium UI Elements */
-        .glass { background: var(--glass); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05); }
-        .btn-premium { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); transition: all 0.3s ease; }
-        .btn-premium:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.3); }
         
-        /* Skeleton Loading Animation */
-        .shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        /* Premium UI Elements */
+        .glass-panel { background: var(--glass); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.03); }
+        .premium-card { transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 28px; }
+        .premium-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.06); border-color: var(--primary); }
+        
+        /* Navigation Transitions */
+        .page-fade-in { animation: pageIn 0.5s ease-out forwards; }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
-        /* Hide scrollbars */
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Scoring Bars */
+        .strength-bar { height: 6px; border-radius: 3px; background: #e2e8f0; overflow: hidden; position: relative; }
+        .strength-fill { height: 100%; transition: width 1.5s cubic-bezier(0.1, 0, 0.2, 1); }
     </style>
 </head>
-<body x-data="arogyaApp()" x-init="init()" class="selection:bg-blue-100 selection:text-blue-700">
+<body x-data="arogyaCore()" x-init="initApp()" @popstate.window="handleBackNavigation($event)">
 
-    <div x-show="loading" class="fixed inset-0 z-[200] bg-white flex items-center justify-center">
-        <div class="flex flex-col items-center">
-            <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-4 font-black text-xs uppercase tracking-[0.3em] text-slate-400">Securing Data...</p>
-        </div>
-    </div>
-
-    <nav class="fixed top-0 w-full z-[100] bg-white/70 backdrop-blur-xl border-b border-slate-100">
+    <header class="fixed top-0 w-full z-[100] glass-panel border-b border-slate-200/50">
         <div class="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-            <div @click="navigate('home')" class="flex items-center gap-3 cursor-pointer group">
-                <div class="bg-blue-600 p-2 rounded-2xl text-white transform group-hover:rotate-12 transition-transform">
-                    <i data-lucide="shield-check"></i>
+            <div @click="navigateTo('home')" class="flex items-center gap-2 cursor-pointer group">
+                <div class="bg-blue-600 p-2 rounded-xl text-white group-hover:rotate-12 transition-transform">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
                 </div>
-                <span class="text-xl font-black font-outfit tracking-tighter text-slate-900 uppercase">Arogya<span class="text-blue-600">X</span></span>
+                <span class="text-xl font-extrabold tracking-tight uppercase">Arogya<span class="text-blue-600">X</span></span>
             </div>
 
-            <div class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-500">
-                <button @click="navigate('home')" :class="view === 'home' ? 'text-blue-600' : ''" class="hover:text-blue-600 transition">Home</button>
-                <button @click="navigate('hospitals')" :class="view === 'hospitals' ? 'text-blue-600' : ''" class="hover:text-blue-600 transition">Hospitals</button>
-                <button @click="navigate('compare')" :class="view === 'compare' ? 'text-blue-600' : ''" class="relative hover:text-blue-600 transition">
-                    Compare
-                    <span x-show="compareList.length > 0" x-text="compareList.length" class="absolute -top-3 -right-4 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-white"></span>
-                </button>
-                <button @click="navigate('contact')" :class="view === 'contact' ? 'text-blue-600' : ''" class="hover:text-blue-600 transition">Contact</button>
-            </div>
+            <nav class="hidden md:flex items-center gap-10">
+                <template x-for="item in ['home', 'hospitals', 'compare', 'contact']">
+                    <button @click="navigateTo(item)" 
+                            :class="page === item ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900'"
+                            class="text-sm font-bold capitalize transition-colors" x-text="item"></button>
+                </template>
+            </nav>
 
             <div class="flex items-center gap-4">
-                <div class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider hidden md:block">
-                    Live Updates
-                </div>
-                <button class="md:hidden p-2 text-slate-900 bg-slate-50 rounded-xl"><i data-lucide="menu"></i></button>
+                <button @click="navigateTo('compare')" class="relative p-2 text-slate-600">
+                    <i data-lucide="git-compare" class="w-6 h-6"></i>
+                    <span x-show="compareList.length > 0" x-text="compareList.length" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full"></span>
+                </button>
+                <button class="md:hidden text-slate-900"><i data-lucide="menu"></i></button>
             </div>
         </div>
-    </nav>
-
-    <div x-show="toast.show" x-transition class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[150] bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-bold text-sm">
-        <i data-lucide="check-circle" class="text-emerald-400 w-4 h-4"></i>
-        <span x-text="toast.message"></span>
-    </div>
+    </header>
 
     <main class="pt-20 md:pt-28 min-h-screen">
 
-        <div x-show="view === 'home'" class="page-transition">
-            <section class="max-w-7xl mx-auto px-4 py-12 md:py-24">
-                <div class="text-center mb-16">
-                    <span class="bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-6 inline-block">Trusted by 50,000+ Hyderabadi Families</span>
-                    <h1 class="text-5xl md:text-8xl font-black font-outfit text-slate-900 mb-8 tracking-tight leading-[0.9]">
-                        The Smartest Way to <br><span class="text-blue-600">Choose Care.</span>
-                    </h1>
-                    <p class="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed mb-12">
-                        We analyze 5,000+ data points daily to give you the truth about Hyderabad's hospitals. No ads. No bias. Just data.
-                    </p>
-
-                    <div class="max-w-3xl mx-auto glass p-3 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row items-center gap-2">
-                        <div class="flex items-center flex-grow w-full px-4">
-                            <i data-lucide="search" class="text-slate-400 w-5 h-5"></i>
-                            <input type="text" x-model="searchQuery" @keyup.enter="navigate('hospitals')" placeholder="Search 'Gachibowli' or 'Cardiology'..." class="bg-transparent w-full p-4 outline-none font-bold text-lg">
-                        </div>
-                        <button @click="navigate('hospitals')" class="w-full md:w-auto btn-premium text-white px-10 py-4 rounded-[1.8rem] font-black uppercase tracking-widest text-sm">Analyze</button>
+        <div x-show="page === 'home'" class="page-fade-in">
+            <section class="max-w-7xl mx-auto px-4 py-12 md:py-24 text-center">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-xs font-bold mb-8">
+                    <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span></span>
+                    Live Data from 60+ Hyderabad Hospitals
+                </div>
+                <h1 class="text-5xl md:text-8xl font-black text-slate-900 mb-8 tracking-tighter leading-[1.1]">
+                    Find the Right Care <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Without the Noise.</span>
+                </h1>
+                
+                <div class="max-w-3xl mx-auto relative mb-20 group">
+                    <div class="bg-white p-2 rounded-[2.5rem] shadow-2xl border border-slate-100 flex items-center ring-offset-4 focus-within:ring-4 ring-blue-100 transition-all">
+                        <div class="pl-6 pr-4 text-slate-400"><i data-lucide="search"></i></div>
+                        <input type="text" x-model="searchQuery" @keyup.enter="navigateTo('hospitals')"
+                               placeholder="Search specialty, area, or hospital name..." 
+                               class="flex-grow py-5 outline-none text-lg font-medium text-slate-700">
+                        <button @click="navigateTo('hospitals')" class="bg-blue-600 text-white px-10 py-5 rounded-[2rem] font-bold hover:bg-blue-700 transition hidden md:block">Find Hospitals</button>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap justify-center gap-3 mb-24">
-                    <template x-for="tag in ['Cardiology', 'Oncology', 'Maternity', 'Pediatrics', 'Emergency', 'Neurology']">
-                        <button @click="searchQuery = tag; navigate('hospitals')" class="px-6 py-2 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-600 hover:border-blue-500 hover:text-blue-600 transition" x-text="tag"></button>
-                    </template>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <template x-for="h in hospitals.slice(0, 3)" :key="h.id">
-                        <div @click="openHospital(h)" class="glass p-8 rounded-[2.5rem] group cursor-pointer hover:ring-4 ring-blue-50 transition-all border border-slate-100">
-                            <div class="flex justify-between items-start mb-6">
-                                <div class="bg-blue-600 text-white p-3 rounded-2xl"><i data-lucide="hospital" class="w-5 h-5"></i></div>
-                                <div class="text-right">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase">Score</p>
-                                    <p class="text-2xl font-black font-outfit text-slate-900" x-text="h.overallScore"></p>
-                                </div>
-                            </div>
-                            <h3 class="text-2xl font-black font-outfit mb-1" x-text="h.name"></h3>
-                            <p class="text-sm font-bold text-slate-400 mb-6 flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3"></i> <span x-text="h.location"></span></p>
-                            
-                            <div class="flex gap-2 mb-8">
-                                <span class="text-[9px] font-black bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg uppercase" x-text="h.bestFor[0]"></span>
-                                <span class="text-[9px] font-black bg-red-50 text-red-600 px-3 py-1 rounded-lg uppercase">Emergency A+</span>
-                            </div>
-
-                            <button class="w-full py-4 bg-slate-50 group-hover:bg-slate-900 group-hover:text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-colors">Audit Profile</button>
-                        </div>
-                    </template>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-5xl mx-auto">
+                    <div class="p-8 rounded-[2rem] bg-white border border-slate-100">
+                        <p class="text-3xl font-black text-slate-900">215+</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Total Hospitals</p>
+                    </div>
+                    <div class="p-8 rounded-[2rem] bg-white border border-slate-100">
+                        <p class="text-3xl font-black text-slate-900">18k</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Verified Doctors</p>
+                    </div>
+                    <div class="p-8 rounded-[2rem] bg-white border border-slate-100">
+                        <p class="text-3xl font-black text-slate-900">12k</p>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Available Beds</p>
+                    </div>
+                    <div class="p-8 rounded-[2rem] bg-blue-600 text-white">
+                        <p class="text-3xl font-black">98%</p>
+                        <p class="text-xs font-bold opacity-80 uppercase tracking-widest mt-1">Data Trust</p>
+                    </div>
                 </div>
             </section>
         </div>
 
-        <div x-show="view === 'hospitals'" class="page-transition max-w-7xl mx-auto px-4 py-12">
+        <div x-show="page === 'hospitals'" class="page-fade-in max-w-7xl mx-auto px-4 py-12">
             <div class="flex flex-col lg:flex-row gap-12">
                 <aside class="w-full lg:w-72 space-y-8">
-                    <div class="glass p-8 rounded-[2rem]">
-                        <h4 class="font-black text-xs uppercase tracking-widest text-slate-400 mb-6">Refine Results</h4>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 sticky top-28">
+                        <h3 class="text-lg font-black mb-6 flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-5 h-5"></i> Filters
+                        </h3>
                         <div class="space-y-6">
                             <div>
-                                <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block">Location</label>
-                                <select x-model="filters.area" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm outline-none">
-                                    <option value="all">Everywhere in Hyderabad</option>
-                                    <template x-for="loc in locations">
-                                        <option :value="loc" x-text="loc"></option>
+                                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3">Area</label>
+                                <select x-model="filters.area" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm outline-none focus:ring-2 ring-blue-500">
+                                    <option value="all">All of Hyderabad</option>
+                                    <template x-for="area in locations">
+                                        <option :value="area" x-text="area"></option>
                                     </template>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-[10px] font-black uppercase text-slate-400 mb-2 block">Hospital Type</label>
-                                <div class="space-y-2">
+                                <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest block mb-3">Type</label>
+                                <div class="flex flex-wrap gap-2">
                                     <template x-for="type in ['Private', 'Government', 'Clinic']">
-                                        <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer">
-                                            <input type="radio" x-model="filters.type" :value="type" class="w-4 h-4 text-blue-600">
-                                            <span class="text-xs font-bold" x-text="type"></span>
-                                        </label>
+                                        <button @click="filters.type = type" 
+                                                :class="filters.type === type ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'"
+                                                class="px-4 py-2 rounded-xl text-xs font-bold transition" x-text="type"></button>
                                     </template>
                                 </div>
                             </div>
@@ -164,42 +141,44 @@
                 </aside>
 
                 <div class="flex-grow">
-                    <div class="flex justify-between items-center mb-10">
-                        <h2 class="text-2xl font-black font-outfit">Showing <span class="text-blue-600" x-text="filteredHospitals.length"></span> Providers</h2>
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
-                            Sort by: <span class="text-slate-900 underline">Arogya Score</span>
+                    <div class="mb-8 flex justify-between items-end">
+                        <div>
+                            <h2 class="text-3xl font-black text-slate-900" x-text="filteredHospitals.length + ' Results'"></h2>
+                            <p class="text-slate-500 font-medium">Verified data for Hyderabad Region</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <template x-for="h in filteredHospitals" :key="h.id">
-                            <div @click="openHospital(h)" class="glass p-6 rounded-[2rem] border border-slate-50 hover:border-blue-500 transition-all cursor-pointer group flex flex-col">
-                                <div class="flex justify-between mb-4">
-                                    <span class="px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase" x-text="h.type"></span>
-                                    <div class="flex gap-1">
-                                        <template x-for="i in 5">
-                                            <div :class="i <= Math.round(h.rating) ? 'bg-amber-400' : 'bg-slate-200'" class="w-2 h-2 rounded-full"></div>
-                                        </template>
+                            <div class="premium-card bg-white p-8 border border-slate-100 flex flex-col cursor-pointer" @click="viewDetail(h)">
+                                <div class="flex justify-between items-start mb-6">
+                                    <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-black uppercase rounded-lg" x-text="h.type"></span>
+                                    <div class="flex items-center gap-1 text-amber-500 font-black">
+                                        <i data-lucide="star" class="w-4 h-4 fill-amber-500"></i> <span x-text="h.rating"></span>
                                     </div>
                                 </div>
-                                <h3 class="text-xl font-black font-outfit mb-1 group-hover:text-blue-600" x-text="h.name"></h3>
-                                <p class="text-xs font-bold text-slate-400 mb-6" x-text="h.location"></p>
+                                <h3 class="text-2xl font-black text-slate-900 mb-1 group-hover:text-blue-600 transition" x-text="h.name"></h3>
+                                <p class="text-slate-400 text-sm font-bold flex items-center gap-1 mb-6">
+                                    <i data-lucide="map-pin" class="w-4 h-4"></i> <span x-text="h.location"></span>
+                                </p>
                                 
-                                <div class="grid grid-cols-2 gap-3 mb-8">
-                                    <div class="bg-slate-50 p-4 rounded-2xl">
-                                        <p class="text-[9px] font-black text-slate-400 uppercase">ICU Capacity</p>
-                                        <p class="text-sm font-black" x-text="h.icuBeds + ' Units'"></p>
+                                <div class="grid grid-cols-2 gap-4 mb-8">
+                                    <div class="p-4 bg-slate-50 rounded-2xl">
+                                        <p class="text-[10px] text-slate-400 font-black uppercase">Doctors</p>
+                                        <p class="text-lg font-black text-slate-900" x-text="h.doctorsCount + '+'"></p>
                                     </div>
-                                    <div class="bg-slate-50 p-4 rounded-2xl">
-                                        <p class="text-[9px] font-black text-slate-400 uppercase">Wait Time</p>
-                                        <p class="text-sm font-black" :class="h.waitTime > 40 ? 'text-red-500' : 'text-emerald-500'" x-text="h.waitTime + 'm'"></p>
+                                    <div class="p-4 bg-slate-50 rounded-2xl">
+                                        <p class="text-[10px] text-slate-400 font-black uppercase">ICU Beds</p>
+                                        <p class="text-lg font-black text-slate-900" x-text="h.icuBeds"></p>
                                     </div>
                                 </div>
 
                                 <div class="mt-auto flex gap-2">
-                                    <button class="flex-grow py-3 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">Audit Profile</button>
-                                    <button @click.stop="toggleCompare(h)" class="p-3 border-2 border-slate-100 rounded-xl transition-all" :class="isInCompare(h.id) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-blue-50'">
-                                        <i data-lucide="layers" class="w-4 h-4"></i>
+                                    <button class="flex-grow bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition">View Profile</button>
+                                    <button @click.stop="toggleCompare(h)" 
+                                            :class="isInCompare(h.id) ? 'bg-blue-600 text-white' : 'bg-white border-2 border-slate-100 text-slate-400'"
+                                            class="px-5 rounded-2xl transition">
+                                        <i data-lucide="git-compare" class="w-5 h-5"></i>
                                     </button>
                                 </div>
                             </div>
@@ -209,247 +188,358 @@
             </div>
         </div>
 
-        <div x-show="view === 'compare'" class="page-transition max-w-7xl mx-auto px-4 py-12">
+        <div x-show="page === 'detail'" class="page-fade-in pb-32">
+            <template x-if="activeH">
+                <div>
+                    <section class="bg-white border-b border-slate-100 py-16 md:py-24 px-4">
+                        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
+                            <div class="flex-grow">
+                                <nav class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase mb-8">
+                                    <span @click="navigateTo('hospitals')" class="hover:text-blue-600 cursor-pointer">Listing</span>
+                                    <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                    <span class="text-slate-900" x-text="activeH.name"></span>
+                                </nav>
+                                <div class="flex flex-wrap gap-2 mb-6">
+                                    <span class="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded-lg" x-show="activeH.emergencyReadiness > 90">Emergency Priority</span>
+                                    <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-lg" x-text="activeH.affordability"></span>
+                                </div>
+                                <h1 class="text-5xl md:text-7xl font-black text-slate-900 mb-4 tracking-tighter" x-text="activeH.name"></h1>
+                                <p class="text-xl text-slate-500 font-medium flex items-center gap-3">
+                                    <i data-lucide="navigation" class="w-6 h-6 text-blue-600"></i> Best for <span class="text-slate-900" x-text="activeH.bestFor[0]"></span> in Hyderabad
+                                </p>
+                            </div>
+                            <div class="bg-slate-900 text-white p-10 rounded-[3rem] text-center min-w-[240px] shadow-2xl shadow-blue-200">
+                                <p class="text-xs font-black uppercase tracking-widest mb-2 opacity-50">Trust Score</p>
+                                <p class="text-7xl font-black" x-text="activeH.overallScore"></p>
+                                <p class="text-[10px] font-bold uppercase mt-4 text-blue-400">Verified Index 2026</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-4 -mt-12 mb-20">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div class="glass-panel p-8 rounded-[2.5rem]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Emergency Readiness</p>
+                                <p class="text-3xl font-black text-slate-900" x-text="activeH.emergencyReadiness + '%'"></p>
+                                <div class="strength-bar mt-4"><div class="strength-fill bg-red-500" :style="'width: '+activeH.emergencyReadiness+'%'"></div></div>
+                            </div>
+                            <div class="glass-panel p-8 rounded-[2.5rem]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Avg Wait Time</p>
+                                <p class="text-3xl font-black text-orange-500" x-text="activeH.waitTime + 'm'"></p>
+                                <p class="text-[10px] font-bold text-slate-400 mt-2">Peak: 10AM - 2PM</p>
+                            </div>
+                            <div class="glass-panel p-8 rounded-[2.5rem]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">ICU Capacity</p>
+                                <p class="text-3xl font-black text-slate-900" x-text="activeH.icuBeds"></p>
+                                <p class="text-[10px] font-bold text-emerald-500 mt-2">Available Now</p>
+                            </div>
+                            <div class="glass-panel p-8 rounded-[2.5rem]">
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Consultation Fee</p>
+                                <p class="text-3xl font-black text-slate-900" x-text="'₹' + activeH.doctors[0].fee"></p>
+                                <p class="text-[10px] font-bold text-slate-400 mt-2">Starting Price</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-16">
+                        <div class="lg:col-span-2 space-y-20">
+                            <div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-10">Department Specializations</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <template x-for="dept in activeH.departmentStrength">
+                                        <div class="p-6 border border-slate-100 rounded-3xl">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <span class="font-bold text-slate-900" x-text="dept.name"></span>
+                                                <span class="text-sm font-black text-blue-600" x-text="dept.score + '%'"></span>
+                                            </div>
+                                            <div class="strength-bar"><div class="strength-fill bg-blue-600" :style="'width: '+dept.score+'%'"></div></div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-3xl font-black text-slate-900 mb-10">Expert Panel</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <template x-for="doc in activeH.doctors">
+                                        <div class="flex items-center gap-6 p-6 bg-white border border-slate-100 rounded-3xl hover:border-blue-200 transition">
+                                            <div class="w-16 h-16 bg-slate-100 rounded-full shrink-0 flex items-center justify-center text-slate-400">
+                                                <i data-lucide="user"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-black text-slate-900" x-text="doc.name"></h4>
+                                                <p class="text-xs font-bold text-blue-600 uppercase tracking-tighter" x-text="doc.specialty"></p>
+                                                <p class="text-xs text-slate-400 mt-1" x-text="doc.experience + ' Years Exp.'"></p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <aside class="space-y-8">
+                            <div class="bg-red-50 p-8 rounded-[2.5rem] border border-red-100">
+                                <h4 class="text-red-600 font-black uppercase text-xs tracking-widest mb-6 flex items-center gap-2">
+                                    <i data-lucide="alert-circle" class="w-4 h-4"></i> Reality Check
+                                </h4>
+                                <ul class="space-y-4">
+                                    <template x-for="con in activeH.cons">
+                                        <li class="flex gap-3 text-sm font-bold text-red-900 leading-relaxed">
+                                            <i data-lucide="minus" class="w-4 h-4 shrink-0 text-red-400"></i> <span x-text="con"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+
+                            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
+                                <h4 class="font-black mb-6">Facilities</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <template x-for="am in activeH.amenities">
+                                        <div class="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                                            <i data-lucide="check" class="w-3 h-3 text-emerald-500"></i> <span x-text="am"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </aside>
+                    </section>
+                </div>
+            </template>
+        </div>
+
+        <div x-show="page === 'compare'" class="page-fade-in max-w-7xl mx-auto px-4 py-12">
             <template x-if="compareList.length < 2">
-                <div class="text-center py-32 glass rounded-[3rem]">
-                    <div class="bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 text-blue-600">
-                        <i data-lucide="layers" class="w-8 h-8"></i>
-                    </div>
-                    <h2 class="text-3xl font-black font-outfit mb-4">Add hospitals to compare</h2>
-                    <p class="text-slate-500 font-bold mb-10">Select at least 2 hospitals to start the intelligent analysis engine.</p>
-                    <button @click="navigate('hospitals')" class="btn-premium text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Browse Hospitals</button>
+                <div class="text-center py-32 bg-white rounded-[3rem] border border-dashed border-slate-200">
+                    <i data-lucide="git-compare" class="w-16 h-16 text-slate-200 mx-auto mb-6"></i>
+                    <h2 class="text-2xl font-black text-slate-900 mb-2">Add at least 2 hospitals</h2>
+                    <p class="text-slate-500 mb-8">Select hospitals from the listing to compare them side-by-side.</p>
+                    <button @click="navigateTo('hospitals')" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold">Browse Hospitals</button>
                 </div>
             </template>
 
             <template x-if="compareList.length >= 2">
-                <div>
-                    <div class="bg-slate-900 rounded-[3rem] p-8 md:p-16 text-white mb-12 relative overflow-hidden">
-                        <div class="absolute -top-10 -right-10 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20"></div>
-                        <h2 class="text-3xl md:text-5xl font-black font-outfit mb-12">The ArogyaX Audit</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-                            <div class="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-md">
-                                <span class="text-[10px] font-black bg-red-500 px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Best for Emergency</span>
-                                <p class="text-2xl font-black font-outfit mb-2" x-text="getWinner('emergency').name"></p>
-                                <p class="text-xs text-slate-400 font-medium leading-relaxed">Highest clinical readiness for critical trauma and cardiac events.</p>
-                            </div>
-                            <div class="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-md">
-                                <span class="text-[10px] font-black bg-emerald-500 px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Best Value</span>
-                                <p class="text-2xl font-black font-outfit mb-2" x-text="getWinner('value').name"></p>
-                                <p class="text-xs text-slate-400 font-medium leading-relaxed">Top-tier care metrics with a Mid-Range affordability index.</p>
-                            </div>
-                            <div class="bg-white/5 border border-white/10 p-8 rounded-[2rem] backdrop-blur-md border-amber-500/30">
-                                <span class="text-[10px] font-black bg-amber-500 px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">Overall Winner</span>
-                                <p class="text-2xl font-black font-outfit mb-2" x-text="getWinner('overall').name"></p>
-                                <p class="text-xs text-slate-400 font-medium leading-relaxed">Maximum trust score based on facilities, doctors, and user feedback.</p>
-                            </div>
-                        </div>
+                <div class="space-y-12">
+                    <div class="flex justify-between items-end">
+                        <h2 class="text-4xl font-black text-slate-900">Decision Matrix</h2>
+                        <button @click="compareList = []" class="text-xs font-bold text-red-500 uppercase tracking-widest">Clear All</button>
                     </div>
 
-                    <div class="glass rounded-[3rem] overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left min-w-[900px]">
-                                <thead>
-                                    <tr class="border-b border-slate-100">
-                                        <th class="p-10 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">Medical Metric</th>
-                                        <template x-for="h in compareList" :key="h.id">
-                                            <th class="p-10">
-                                                <p class="text-2xl font-black font-outfit text-slate-900" x-text="h.name"></p>
-                                                <button @click="toggleCompare(h)" class="text-[10px] font-black text-red-500 uppercase mt-4 hover:underline">Remove</button>
-                                            </th>
-                                        </template>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm font-bold text-slate-600">
-                                    <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
-                                        <td class="p-8 px-10 text-slate-400">Arogya Score</td>
-                                        <template x-for="h in compareList">
-                                            <td class="p-8">
-                                                <div class="flex items-center gap-3">
-                                                    <span class="text-xl font-black text-slate-900" x-text="h.overallScore"></span>
-                                                    <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                        <div class="h-full bg-blue-600" :style="'width:' + (h.overallScore * 10) + '%'"></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </template>
-                                    </tr>
-                                    <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
-                                        <td class="p-8 px-10 text-slate-400">Affordability</td>
-                                        <template x-for="h in compareList">
-                                            <td class="p-8">
-                                                <span :class="h.affordability === 'Premium' ? 'text-red-500' : 'text-emerald-500'" x-text="h.affordability"></span>
-                                            </td>
-                                        </template>
-                                    </tr>
-                                    <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
-                                        <td class="p-8 px-10 text-slate-400">Emergency Readiness</td>
-                                        <template x-for="h in compareList">
-                                            <td class="p-8">
-                                                <div class="flex items-center gap-2">
-                                                    <div :class="h.emergencyReadiness > 90 ? 'bg-emerald-500' : 'bg-amber-500'" class="w-3 h-3 rounded-full"></div>
-                                                    <span x-text="h.emergencyReadiness + '%'"></span>
-                                                </div>
-                                            </td>
-                                        </template>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="bg-white rounded-[3rem] border border-slate-100 overflow-hidden shadow-2xl overflow-x-auto">
+                        <table class="w-full text-left min-w-[800px]">
+                            <thead>
+                                <tr class="bg-slate-900 text-white">
+                                    <th class="p-8 text-[10px] font-black uppercase tracking-widest opacity-50">Core Parameters</th>
+                                    <template x-for="h in compareList" :key="h.id">
+                                        <th class="p-8">
+                                            <p class="text-lg font-black" x-text="h.name"></p>
+                                            <p class="text-xs opacity-50 font-medium" x-text="h.location"></p>
+                                        </th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <tr>
+                                    <td class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Trust Score</td>
+                                    <template x-for="h in compareList">
+                                        <td class="p-8 text-2xl font-black text-blue-600" x-text="h.overallScore"></td>
+                                    </template>
+                                </tr>
+                                <tr>
+                                    <td class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">ICU Beds</td>
+                                    <template x-for="h in compareList">
+                                        <td class="p-8 font-black text-slate-900" x-text="h.icuBeds"></td>
+                                    </template>
+                                </tr>
+                                <tr>
+                                    <td class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Emergency Readiness</td>
+                                    <template x-for="h in compareList">
+                                        <td class="p-8">
+                                            <span :class="h.emergencyReadiness > 90 ? 'text-red-600' : 'text-slate-900'" class="font-black" x-text="h.emergencyReadiness + '%'"></span>
+                                        </td>
+                                    </template>
+                                </tr>
+                                <tr>
+                                    <td class="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">Affordability</td>
+                                    <template x-for="h in compareList">
+                                        <td class="p-8 font-black text-slate-900" x-text="h.affordability"></td>
+                                    </template>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </template>
         </div>
 
+        <div x-show="page === 'contact'" class="page-fade-in max-w-2xl mx-auto px-4 py-24">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl font-black text-slate-900 mb-4">Contact Our Analysts</h2>
+                <p class="text-slate-500 text-lg font-medium">Have feedback on our data? Reach out to the ArogyaX team.</p>
+            </div>
+            <form class="space-y-6 bg-white p-10 md:p-16 rounded-[3rem] border border-slate-100 shadow-xl" @submit.prevent="alert('Thank you for reaching out!')">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-xs font-black uppercase text-slate-400 ml-2">Full Name</label>
+                        <input type="text" required class="w-full p-5 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-black uppercase text-slate-400 ml-2">Email Address</label>
+                        <input type="email" required class="w-full p-5 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-xs font-black uppercase text-slate-400 ml-2">Message</label>
+                    <textarea rows="5" required class="w-full p-5 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 ring-blue-500"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-6 rounded-2xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all">Submit Feedback</button>
+            </form>
+        </div>
+
     </main>
 
-    <footer class="bg-white border-t border-slate-100 pt-24 pb-12 mt-20">
-        <div class="max-w-7xl mx-auto px-4 text-center md:text-left">
-            <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-20">
-                <div class="max-w-xs">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="bg-blue-600 p-2 rounded-xl text-white">
-                            <i data-lucide="shield-check" class="w-5 h-5"></i>
-                        </div>
-                        <span class="text-xl font-black font-outfit tracking-tighter uppercase">Arogya<span class="text-blue-600">X</span></span>
+    <footer class="bg-white border-t border-slate-100 pt-32 pb-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+                <div class="col-span-2">
+                    <div class="flex items-center gap-2 mb-8">
+                        <div class="bg-blue-600 p-2 rounded-xl text-white"><i data-lucide="activity"></i></div>
+                        <span class="text-2xl font-extrabold uppercase">Arogya<span class="text-blue-600">X</span></span>
                     </div>
-                    <p class="text-slate-400 font-bold text-sm leading-relaxed">
-                        Data-driven healthcare intelligence for a safer Hyderabad. Verification frequency: 24h.
-                    </p>
+                    <p class="text-slate-400 font-medium max-w-sm leading-relaxed">Helping you choose the right hospital in Hyderabad with verified, structured, and honest data insights.</p>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-12">
-                    <div class="space-y-4">
-                        <h5 class="text-[10px] font-black uppercase text-slate-900 tracking-widest">Platform</h5>
-                        <ul class="text-sm font-bold text-slate-400 space-y-2">
-                            <li><button @click="navigate('hospitals')">Hospitals</button></li>
-                            <li><button @click="navigate('compare')">Compare Engine</button></li>
-                            <li><button @click="navigate('home')">Audit Process</button></li>
-                        </ul>
-                    </div>
-                    <div class="space-y-4">
-                        <h5 class="text-[10px] font-black uppercase text-slate-900 tracking-widest">Legal</h5>
-                        <ul class="text-sm font-bold text-slate-400 space-y-2">
-                            <li>Privacy Policy</li>
-                            <li>Terms of Use</li>
-                            <li>Data Disclaimer</li>
-                        </ul>
-                    </div>
+                <div>
+                    <h4 class="font-black mb-8 uppercase text-xs tracking-widest text-slate-900">Platform</h4>
+                    <ul class="space-y-4 text-sm font-bold text-slate-500">
+                        <li><button @click="navigateTo('home')">Home</button></li>
+                        <li><button @click="navigateTo('hospitals')">Hospitals</button></li>
+                        <li><button @click="navigateTo('compare')">Compare Engine</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-black mb-8 uppercase text-xs tracking-widest text-slate-900">Legal</h4>
+                    <ul class="space-y-4 text-sm font-bold text-slate-500">
+                        <li><button>Privacy Policy</button></li>
+                        <li><button>Terms of Use</button></li>
+                        <li><button>Data Disclaimer</button></li>
+                    </ul>
                 </div>
             </div>
             <div class="border-t border-slate-50 pt-12 flex flex-col md:flex-row justify-between items-center gap-6">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">&copy; 2026 ArogyaX Intelligence Systems</p>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">© 2026 ArogyaX Hyderabad. All Data Verified.</p>
                 <div class="flex gap-6">
-                    <div class="w-8 h-8 bg-slate-50 rounded-full"></div>
-                    <div class="w-8 h-8 bg-slate-50 rounded-full"></div>
+                    <i data-lucide="twitter" class="w-5 h-5 text-slate-300"></i>
+                    <i data-lucide="linkedin" class="w-5 h-5 text-slate-300"></i>
                 </div>
             </div>
         </div>
     </footer>
 
     <script>
-        function arogyaApp() {
+        function arogyaCore() {
             return {
-                view: 'home',
-                loading: true,
+                page: 'home',
                 searchQuery: '',
+                activeH: null,
                 compareList: [],
                 filters: { area: 'all', type: 'all' },
-                toast: { show: false, message: '' },
-                locations: ['Jubilee Hills', 'Banjara Hills', 'Gachibowli', 'Kukatpally', 'Secunderabad', 'Madhapur', 'Miyapur'],
+                locations: ['Banjara Hills', 'Jubilee Hills', 'Gachibowli', 'Secunderabad', 'Madhapur', 'Kukatpally', 'Miyapur'],
                 
+                // DATA ENGINE: 60+ Extended Dataset (Representative sample for demo)
                 hospitals: [
-                    { id: 1, name: "Apollo Health City", location: "Jubilee Hills", type: "Private", rating: 4.8, overallScore: 9.4, beds: 600, icuBeds: 125, doctorsCount: 480, waitTime: 40, affordability: "Premium", emergencyReadiness: 98, bestFor: ["Cardiology", "Robotic Surgery"] },
-                    { id: 2, name: "Yashoda Hospitals", location: "Secunderabad", type: "Private", rating: 4.7, overallScore: 9.1, beds: 500, icuBeds: 95, doctorsCount: 350, waitTime: 30, affordability: "Mid-Range", emergencyReadiness: 94, bestFor: ["Pulmonology", "Oncology"] },
-                    { id: 3, name: "KIMS Hospital", location: "Kukatpally", type: "Private", rating: 4.5, overallScore: 8.8, beds: 750, icuBeds: 110, doctorsCount: 400, waitTime: 55, affordability: "Mid-Range", emergencyReadiness: 89, bestFor: ["Orthopedics", "Renal Sciences"] },
-                    { id: 4, name: "Continental Hospital", location: "Gachibowli", type: "Private", rating: 4.9, overallScore: 9.5, beds: 250, icuBeds: 80, doctorsCount: 220, waitTime: 20, affordability: "Premium", emergencyReadiness: 97, bestFor: ["Emergency Care", "Neurology"] },
-                    { id: 5, name: "Care Hospitals", location: "Banjara Hills", type: "Private", rating: 4.6, overallScore: 8.9, beds: 300, icuBeds: 60, doctorsCount: 280, waitTime: 35, affordability: "Mid-Range", emergencyReadiness: 92, bestFor: ["Cardiac Sciences", "Gastroenterology"] },
-                    { id: 6, name: "NIMS (Govt)", location: "Punjagutta", type: "Government", rating: 4.2, overallScore: 7.5, beds: 1200, icuBeds: 150, doctorsCount: 600, waitTime: 120, affordability: "Budget", emergencyReadiness: 85, bestFor: ["Multi-Specialty", "Research"] }
+                    {
+                        id: 1, name: "Apollo Health City", location: "Jubilee Hills", type: "Private", rating: 4.8, 
+                        overallScore: 9.6, beds: 600, icuBeds: 120, doctorsCount: 450, waitTime: 45, affordability: "Premium",
+                        emergencyReadiness: 98, bestFor: ["Cardiac Sciences", "Robotic Surgery", "Oncology"],
+                        cons: ["High waiting period for OPD", "Premium pricing model", "Extremely busy pharmacy"],
+                        amenities: ["Pharmacy 24/7", "Cafeteria", "WiFi", "Wheelchair", "Parking", "Ambulance"],
+                        departmentStrength: [{name: "Cardiology", score: 98}, {name: "Neurology", score: 92}, {name: "Oncology", score: 95}],
+                        doctors: [
+                            {id: 101, name: "Dr. K. S. Somaraju", specialty: "Cardiologist", experience: 28, fee: 1500},
+                            {id: 102, name: "Dr. Sudheer Reddy", specialty: "Neurologist", experience: 20, fee: 1200}
+                        ]
+                    },
+                    {
+                        id: 2, name: "Yashoda Hospitals", location: "Secunderabad", type: "Private", rating: 4.7, 
+                        overallScore: 9.2, beds: 500, icuBeds: 90, doctorsCount: 320, waitTime: 30, affordability: "Mid-Range",
+                        emergencyReadiness: 94, bestFor: ["Transplant", "Pulmonology"],
+                        cons: ["Limited parking space", "Shared room sizes are small"],
+                        amenities: ["Pharmacy 24/7", "Ambulance", "Cafeteria", "Parking"],
+                        departmentStrength: [{name: "Pulmonology", score: 97}, {name: "Orthopedics", score: 88}],
+                        doctors: [{id: 103, name: "Dr. P. Naveen", specialty: "Pulmonologist", experience: 15, fee: 1000}]
+                    },
+                    {
+                        id: 3, name: "KIMS Hospitals", location: "Secunderabad", type: "Private", rating: 4.6, 
+                        overallScore: 8.9, beds: 1000, icuBeds: 200, doctorsCount: 550, waitTime: 55, affordability: "Mid-Range",
+                        emergencyReadiness: 91, bestFor: ["Renal Sciences", "Cardiac Bypass"],
+                        cons: ["High patient volume", "Complex admission steps"],
+                        amenities: ["Pharmacy 24/7", "Diagnostics", "Large Parking", "WiFi"],
+                        departmentStrength: [{name: "Nephrology", score: 96}, {name: "Cardiology", score: 90}],
+                        doctors: [{id: 104, name: "Dr. Bhaskar Rao", specialty: "Cardiac Surgeon", experience: 30, fee: 1200}]
+                    },
+                    {
+                        id: 4, name: "NIMS", location: "Punjagutta", type: "Government", rating: 4.2, 
+                        overallScore: 8.5, beds: 1200, icuBeds: 150, doctorsCount: 400, waitTime: 120, affordability: "Budget",
+                        emergencyReadiness: 95, bestFor: ["Emergency", "General Surgery"],
+                        cons: ["Long queues", "Dated infrastructure in general wards"],
+                        amenities: ["Pharmacy 24/7", "Ambulance", "Blood Bank"],
+                        departmentStrength: [{name: "Emergency", score: 98}, {name: "Gastroenterology", score: 85}],
+                        doctors: [{id: 105, name: "Dr. Manohar", specialty: "General Surgeon", experience: 25, fee: 200}]
+                    }
                 ],
 
-                init() {
-                    // Security: Load session safely
-                    const saved = localStorage.getItem('ax_compare');
-                    if (saved) {
-                        try {
-                            const ids = JSON.parse(saved);
-                            this.compareList = this.hospitals.filter(h => ids.includes(h.id));
-                        } catch(e) { localStorage.removeItem('ax_compare'); }
-                    }
-
-                    // Handle Browser History (PushState Logic)
-                    window.onpopstate = (event) => {
-                        if (event.state && event.state.view) this.view = event.state.view;
-                    };
-
-                    setTimeout(() => {
-                        this.loading = false;
-                        lucide.createIcons();
-                    }, 1200);
-                },
-
-                navigate(view) {
-                    this.loading = true;
-                    this.view = view;
-                    // Security: Sanitize URL state
-                    const state = { view: view };
-                    history.pushState(state, '', `#${view}`);
-                    
-                    setTimeout(() => {
-                        this.loading = false;
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        this.$nextTick(() => lucide.createIcons());
-                    }, 400);
-                },
-
                 get filteredHospitals() {
-                    let data = this.hospitals;
+                    let res = this.hospitals;
                     if (this.searchQuery) {
                         const q = this.searchQuery.toLowerCase();
-                        data = data.filter(h => h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || h.bestFor.some(b => b.toLowerCase().includes(q)));
+                        res = res.filter(h => h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || h.bestFor.some(b => b.toLowerCase().includes(q)));
                     }
-                    if (this.filters.area !== 'all') data = data.filter(h => h.location === this.filters.area);
-                    if (this.filters.type !== 'all') data = data.filter(h => h.type === this.filters.type);
-                    return data;
+                    if (this.filters.area !== 'all') res = res.filter(h => h.location === this.filters.area);
+                    if (this.filters.type !== 'all') res = res.filter(h => h.type === this.filters.type);
+                    return res;
                 },
+
+                // ROUTING & HISTORY
+                navigateTo(page, data = null) {
+                    this.page = page;
+                    if (page === 'detail') this.activeH = data;
+                    
+                    // Frontend Security: Only update hash with safe strings
+                    const hash = data ? `${page}/${data.id}` : page;
+                    window.history.pushState({page, id: data?.id}, '', `#${hash}`);
+                    window.scrollTo({top: 0, behavior: 'smooth'});
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                handleBackNavigation(event) {
+                    if (event.state) {
+                        this.page = event.state.page;
+                        if (this.page === 'detail' && event.state.id) {
+                            this.activeH = this.hospitals.find(h => h.id === event.state.id);
+                        }
+                    } else {
+                        this.page = 'home';
+                    }
+                    this.$nextTick(() => lucide.createIcons());
+                },
+
+                viewDetail(h) { this.navigateTo('detail', h); },
 
                 toggleCompare(h) {
-                    const idx = this.compareList.findIndex(x => x.id === h.id);
-                    if (idx > -1) {
-                        this.compareList.splice(idx, 1);
-                        this.showToast("Removed from comparison");
-                    } else {
-                        if (this.compareList.length < 3) {
-                            this.compareList.push(h);
-                            this.showToast("Added to comparison engine");
-                        } else {
-                            this.showToast("Max 3 hospitals allowed");
-                        }
+                    const idx = this.compareList.findIndex(item => item.id === h.id);
+                    if (idx > -1) this.compareList.splice(idx, 1);
+                    else if (this.compareList.length < 3) this.compareList.push(h);
+                    else alert("Comparison limited to 3 hospitals.");
+                },
+
+                isInCompare(id) { return this.compareList.some(item => item.id === id); },
+
+                initApp() {
+                    lucide.createIcons();
+                    // Basic routing for direct link entry
+                    const hash = window.location.hash.replace('#', '').split('/');
+                    if (hash[0] && ['home', 'hospitals', 'compare', 'contact'].includes(hash[0])) {
+                        this.page = hash[0];
                     }
-                    // Security: Sync compare list to encrypted-style string
-                    localStorage.setItem('ax_compare', JSON.stringify(this.compareList.map(x => x.id)));
-                },
-
-                isInCompare(id) { return this.compareList.some(x => x.id === id); },
-
-                showToast(msg) {
-                    this.toast.message = msg;
-                    this.toast.show = true;
-                    setTimeout(() => this.toast.show = false, 3000);
-                },
-
-                getWinner(type) {
-                    if (this.compareList.length === 0) return {};
-                    if (type === 'emergency') return this.compareList.reduce((a, b) => a.emergencyReadiness > b.emergencyReadiness ? a : b);
-                    if (type === 'value') {
-                        const score = { 'Budget': 3, 'Mid-Range': 2, 'Premium': 1 };
-                        return this.compareList.reduce((a, b) => score[a.affordability] > score[b.affordability] ? a : b);
-                    }
-                    return this.compareList.reduce((a, b) => a.overallScore > b.overallScore ? a : b);
-                },
-
-                openHospital(h) {
-                    // Placeholder for detail view
-                    this.showToast("Redirecting to Audit Profile...");
                 }
             }
         }
